@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>暗号化された暗殺依頼</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      background: #f4f4f4;
+      color: #222;
+    }
+
+    .app {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 240px;
+      background: #fff;
+      border-right: 1px solid #ddd;
+      padding: 20px 16px;
+      flex-shrink: 0;
+    }
+
+    .game-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
+    .game-info {
+      font-size: 12px;
+      line-height: 1.7;
+      color: #555;
+      white-space: pre-line;
+      margin-bottom: 24px;
+    }
+
+    .tabs {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .tab-button {
+      width: 100%;
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #222;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      text-align: left;
+    }
+
+    .tab-button.active {
+      background: #222;
+      color: #fff;
+      border-color: #222;
+    }
+
+    .main {
+      flex: 1;
+      padding: 32px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .stage-container {
+      width: 100%;
+      max-width: 960px;
+    }
+
+    .stage-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .description-box {
+      width: 100%;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 20px;
+      line-height: 1.9;
+      white-space: pre-line;
+      font-size: 15px;
+    }
+
+    .image-box {
+      width: 100%;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stage-image {
+      width: 100%;
+      display: block;
+      border-radius: 8px;
+    }
+
+    .answer-box {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .answer-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .answer-input {
+      flex: 1;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #bbb;
+      border-radius: 8px;
+    }
+
+    .button {
+      border: none;
+      border-radius: 8px;
+      background: #222;
+      color: #fff;
+      padding: 12px 18px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .button:hover {
+      opacity: 0.85;
+    }
+
+    .message {
+      min-height: 24px;
+      margin-top: 12px;
+      font-weight: 700;
+    }
+
+    .message.correct {
+      color: #0a7a2f;
+    }
+
+    .message.wrong {
+      color: #c62828;
+    }
+
+    .reset-button {
+      display: none;
+      margin-top: 16px;
+      background: #777;
+    }
+
+    .next-button-wrap {
+      display: none;
+    }
+
+    .clear-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 1000;
+    }
+
+    .clear-modal {
+      position: relative;
+      width: 100%;
+      max-width: 430px;
+      background: #fff;
+      border: 2px solid #222;
+      border-radius: 16px;
+      padding: 38px 24px 30px;
+      text-align: center;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .close-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border-radius: 50%;
+      background: #eee;
+      color: #222;
+      font-size: 20px;
+      line-height: 32px;
+    }
+
+    .clear-title {
+      font-size: 38px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .clear-subtitle {
+      font-size: 20px;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .post-button {
+      display: inline-block;
+      text-decoration: none;
+      background: #222;
+      color: #fff;
+      padding: 12px 30px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 768px) {
+      .app {
+        display: block;
+      }
+
+      .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+        padding: 14px 16px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .game-title {
+        font-size: 20px;
+        margin-bottom: 6px;
+      }
+
+      .game-info {
+        font-size: 11px;
+        line-height: 1.6;
+        margin-bottom: 12px;
+      }
+
+      .tabs {
+        flex-direction: row;
+        gap: 6px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+
+      .tab-button {
+        width: auto;
+        min-width: 52px;
+        flex-shrink: 0;
+        text-align: center;
+        padding: 8px 10px;
+      }
+
+      .main {
+        padding: 16px;
+      }
+
+      .stage-title {
+        font-size: 18px;
+      }
+
+      .description-box {
+        font-size: 14px;
+      }
+
+      .answer-row {
+        flex-direction: column;
+      }
+
+      .button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="game-title">暗号化された暗殺依頼</div>
+      <div class="game-info">想定クリア時間：60min
+公開日：2026年5月22日
+制作：mm（@mm_syumida）#mmの謎解き</div>
+      <nav id="tabs" class="tabs" aria-label="ステージ一覧"></nav>
+    </aside>
+
+    <main class="main">
+      <section class="stage-container">
+        <div id="stageTitle" class="stage-title"></div>
+
+        <div id="descriptionBox" class="description-box"></div>
+
+        <div id="imageBox" class="image-box">
+          <img id="stageImage" class="stage-image" src="" alt="謎画像" />
+        </div>
+
+        <div class="answer-box">
+          <div id="answerArea">
+            <div class="answer-row">
+              <input id="answerInput" class="answer-input" type="text" placeholder="答えを入力" autocomplete="off" />
+              <button id="answerButton" class="button">解答</button>
+            </div>
+            <div id="message" class="message"></div>
+          </div>
+
+          <div id="nextButtonWrap" class="next-button-wrap">
+            <button id="nextButton" class="button">次へ</button>
+          </div>
+
+          <button id="resetButton" class="button reset-button">進行状況をリセット</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="clearOverlay" class="clear-overlay">
+    <div class="clear-modal">
+      <button id="closeButton" class="button close-button" aria-label="閉じる">×</button>
+      <div class="clear-title">CLEAR！</div>
+      <div class="clear-subtitle">暗号化された暗殺依頼</div>
+      <a id="postButton" class="post-button" href="#" target="_blank" rel="noopener noreferrer">POST</a>
+    </div>
+  </div>
+
+  <script>
+    const GAME_TITLE = "暗号化された暗殺依頼";
+    const STORAGE_KEY = "angouka_ansatsu_irai_progress_v2";
+
+    const stages = [
+      {
+        label: "はじめに",
+        hasImage: false,
+        description: `俺は殺し屋だ。
+政府の要人9人を順番に殺してほしいと依頼があった。
+俺の腕も確かめるためか、1人ずつターゲットを伝えるとのことだ。
+また昨今、メールや電話でのやりとりは傍受される恐れがあるため、手紙で指示を受けることとなった。
+また、手紙でも念のため暗号にして指示を出すとのことだ。手紙も検閲される恐れはあるからな。用心深い。
+
+＜CLEARの条件＞
+全てのターゲットの名前を突き止め、依頼を達成しよう。`
+      },
+      {
+        label: "1",
+        answer: "なかしま",
+        hasImage: true,
+        description: `さて、最初の指示文書が届いた。
+
+※ひらがなで解答`
+      },
+      {
+        label: "2",
+        answer: "ふじさわ",
+        hasImage: true,
+        description: `行頭だけの縦読みだけではなく、行末の縦読みも合わせる、高度な暗号化だった。
+暗殺は無事成功し、ほどなくして2通目が届いた。
+
+※ひらがなで解答`
+      },
+      {
+        label: "3",
+        answer: "たけ",
+        hasImage: true,
+        description: `単純な謎解きと、「シ尺」で「沢」という漢字を表現している高度な暗号だった。
+暗殺は無事成功。
+3通目は、またテイストを変えて指示文書とばれないように送ってきた。
+
+※ひらがなで解答`
+      },
+      {
+        label: "4",
+        answer: "うえがき",
+        hasImage: true,
+        description: `50音表での間の文字を抽出するという、高度な暗号だった。
+3人目も無事暗殺成功。
+いよいよ、政府の警戒度が高まってきており、検閲も厳格化。
+暗号化のレベルが上がってきたようだ。
+
+※ひらがなで解答`
+      },
+      {
+        label: "5",
+        answer: "もり",
+        hasImage: true,
+        description: `「くのいち」、つまり「くの位置」に着目したうえで、タンを入れるな、つまり「した」が入らない名前、という高度な暗号だった。
+4人目も無事暗殺成功。
+政府の警戒度は高まり、手紙の文字数制限がかけられるようになった。
+
+※ひらがなで解答`
+      },
+      {
+        label: "6",
+        answer: "やまお",
+        hasImage: true,
+        description: `回文で名前を依頼する、高度な暗号だった。
+5人目も暗殺成功。
+検閲レベルがあがり、ひらがなと漢字以外は手紙に記せないようだ。
+
+※ひらがなで解答`
+      },
+      {
+        label: "7",
+        answer: "たんの",
+        hasImage: true,
+        description: `誤算を「ゴサン」、つまり「5×3」と解釈して文章を読む、高度な暗号だった。
+指示通り、ナイフで6人目も暗殺成功。
+検閲レベルがグンと上がり、どうやら漢字以外は手紙に記せないようだ。
+
+※ひらがなで解答`
+      },
+      {
+        label: "8",
+        answer: "くわた",
+        hasImage: true,
+        description: `漢字の画数に着目して文字を抽出する、高度な暗号だった。
+7人目も暗殺成功。あとは2人だ。終わりは近い。
+
+※ひらがなで解答`
+      },
+      {
+        label: "9",
+        answer: "しまがわ",
+        hasImage: true,
+        description: `色は匂へど散りぬるを、つまりいろは歌に着目する、高度な暗号だった。
+8人目も暗殺成功。これが最後の1人だ。
+検閲レベルが最高点に達した。
+二字熟語３つで手紙を送らなければならないらしい。
+
+※ひらがなで解答`
+      }
+    ];
+
+    const LAST_STAGE_INDEX = stages.length - 1;
+
+    let currentStageIndex = 0;
+    let maxUnlockedStageIndex = 0;
+    let cleared = false;
+
+    function slide(number) {
+      return "./nazo05/スライド" + number + ".JPG";
+    }
+
+    function normalizeAnswer(value) {
+      return value.trim();
+    }
+
+    function loadProgress() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+
+      try {
+        const data = JSON.parse(saved);
+        currentStageIndex = Number(data.currentStageIndex);
+        maxUnlockedStageIndex = Number(data.maxUnlockedStageIndex);
+        cleared = Boolean(data.cleared);
+
+        if (Number.isNaN(currentStageIndex)) currentStageIndex = 0;
+        if (Number.isNaN(maxUnlockedStageIndex)) maxUnlockedStageIndex = 0;
+
+        currentStageIndex = Math.min(Math.max(currentStageIndex, 0), LAST_STAGE_INDEX);
+        maxUnlockedStageIndex = Math.min(Math.max(maxUnlockedStageIndex, 0), LAST_STAGE_INDEX);
+
+        if (currentStageIndex > maxUnlockedStageIndex) {
+          currentStageIndex = maxUnlockedStageIndex;
+        }
+      } catch (error) {
+        currentStageIndex = 0;
+        maxUnlockedStageIndex = 0;
+        cleared = false;
+      }
+    }
+
+    function saveProgress() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        currentStageIndex,
+        maxUnlockedStageIndex,
+        cleared
+      }));
+    }
+
+    function renderTabs() {
+      const tabs = document.getElementById("tabs");
+      tabs.innerHTML = "";
+
+      for (let i = 0; i <= maxUnlockedStageIndex; i++) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "tab-button" + (i === currentStageIndex ? " active" : "");
+        button.textContent = stages[i].label;
+        button.addEventListener("click", () => {
+          currentStageIndex = i;
+          saveProgress();
+          render();
+        });
+        tabs.appendChild(button);
+      }
+    }
+
+    function renderStage() {
+      const stage = stages[currentStageIndex];
+
+      document.getElementById("stageTitle").textContent = stage.label;
+      document.getElementById("descriptionBox").textContent = stage.description;
+
+      const imageBox = document.getElementById("imageBox");
+      const stageImage = document.getElementById("stageImage");
+      const answerArea = document.getElementById("answerArea");
+      const nextButtonWrap = document.getElementById("nextButtonWrap");
+      const resetButton = document.getElementById("resetButton");
+      const message = document.getElementById("message");
+      const answerInput = document.getElementById("answerInput");
+
+      message.textContent = "";
+      message.className = "message";
+      answerInput.value = "";
+
+      if (stage.hasImage) {
+        imageBox.style.display = "block";
+        stageImage.src = slide(currentStageIndex);
+        stageImage.alt = "ステージ" + stage.label + "の謎画像";
+      } else {
+        imageBox.style.display = "none";
+        stageImage.src = "";
+      }
+
+      if (currentStageIndex === 0) {
+        answerArea.style.display = "none";
+        nextButtonWrap.style.display = "block";
+      } else {
+        answerArea.style.display = "block";
+        nextButtonWrap.style.display = "none";
+      }
+
+      resetButton.style.display = cleared && currentStageIndex === LAST_STAGE_INDEX ? "inline-block" : "none";
+    }
+
+    function render() {
+      renderTabs();
+      renderStage();
+    }
+
+    function goNextFromIntro() {
+      if (maxUnlockedStageIndex < 1) {
+        maxUnlockedStageIndex = 1;
+      }
+      currentStageIndex = 1;
+      saveProgress();
+      render();
+    }
+
+    function checkAnswer() {
+      const stage = stages[currentStageIndex];
+      if (!stage.answer) return;
+
+      const input = normalizeAnswer(document.getElementById("answerInput").value);
+      const message = document.getElementById("message");
+
+      if (input !== stage.answer) {
+        message.textContent = "不正解";
+        message.className = "message wrong";
+        return;
+      }
+
+      message.textContent = "正解だ。";
+      message.className = "message correct";
+
+      if (currentStageIndex < LAST_STAGE_INDEX) {
+        maxUnlockedStageIndex = Math.max(maxUnlockedStageIndex, currentStageIndex + 1);
+        saveProgress();
+
+        setTimeout(() => {
+          currentStageIndex += 1;
+          saveProgress();
+          render();
+        }, 700);
+        return;
+      }
+
+      cleared = true;
+      maxUnlockedStageIndex = LAST_STAGE_INDEX;
+      saveProgress();
+      render();
+      showClearModal();
+    }
+
+    function showClearModal() {
+      const overlay = document.getElementById("clearOverlay");
+      const postButton = document.getElementById("postButton");
+      const siteUrl = window.location.href;
+      const postText = `${GAME_TITLE}をクリアしました！\n#mmの謎解き #暗号化暗殺謎\n${siteUrl}`;
+      const postUrl = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(postText);
+
+      postButton.href = postUrl;
+      overlay.style.display = "flex";
+    }
+
+    function closeClearModal() {
+      document.getElementById("clearOverlay").style.display = "none";
+    }
+
+    function resetProgress() {
+      localStorage.removeItem(STORAGE_KEY);
+      currentStageIndex = 0;
+      maxUnlockedStageIndex = 0;
+      cleared = false;
+      closeClearModal();
+      render();
+    }
+
+    document.getElementById("answerButton").addEventListener("click", checkAnswer);
+
+    document.getElementById("answerInput").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        checkAnswer();
+      }
+    });
+
+    document.getElementById("nextButton").addEventListener("click", goNextFromIntro);
+    document.getElementById("closeButton").addEventListener("click", closeClearModal);
+    document.getElementById("resetButton").addEventListener("click", resetProgress);
+
+    loadProgress();
+    render();
+  </script>
+</body>
+</html>
